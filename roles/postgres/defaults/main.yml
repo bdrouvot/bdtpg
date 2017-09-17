@@ -1,0 +1,4 @@
+postgres_port: 5432
+postgresql_server: "{{ansible_hostname}}"
+postgres_dir: "/data/pgdata"
+pg_pwd: 'bdtbdt'

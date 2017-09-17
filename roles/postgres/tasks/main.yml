@@ -1,0 +1,135 @@
+
+#--------------------------------------------------------------
+# Install Postgresql
+#--------------------------------------------------------------
+
+- name : Stop postgresql service
+  service:
+    name: postgresql
+    state: stopped
+  tags: postgresql
+  ignore_errors: true
+
+- name: Install postgresql
+  yum:
+    name: postgresql-server
+    state: present
+  tags: postgresql
+
+- name: Create data directory
+  file:
+    path: "{{postgres_dir}}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: 0700 
+  tags: postgresql
+
+- name: Copy postgresql service
+  template: 
+    src: postgresql.service.j2 
+    dest: /lib/systemd/system/postgresql.service
+  tags: postgresql
+
+- stat:
+    path: "{{postgres_dir}}/PG_VERSION"
+  register: pg_data
+  tags: postgresql
+
+- name: Init Postgresql
+  shell: postgresql-setup initdb
+  environment: 
+    PGDATA: "{{postgres_dir}}"
+  when: not pg_data.stat.exists
+  tags: postgresql
+
+- name: Add authorizations to pg_hba file
+  lineinfile:
+    dest: "{{postgres_dir}}/pg_hba.conf"
+    line: "host    all             all             0.0.0.0/0               md5"
+  tags: postgresql
+
+- name: Add authorizations to pg_hba file
+  lineinfile:
+    dest: "{{postgres_dir}}/pg_hba.conf"
+    line: "host    all             all             127.0.0.1/32               md5"
+  tags: postgresql
+
+- name: Add authorizations to pg_hba file
+  lineinfile:
+    dest: "{{postgres_dir}}/pg_hba.conf"
+    line: "host    all             all             all       md5"
+  tags: postgresql
+
+- name: remove defaults from pg_hba file
+  lineinfile:
+    dest: "{{postgres_dir}}/pg_hba.conf"
+    regexp: "^host.*ident$"
+    state: absent
+  tags: postgresql
+
+- name: modify postgresql.conf
+  lineinfile:
+    dest: "{{postgres_dir}}/postgresql.conf"
+    line: "listen_addresses = '*'"
+  tags: postgresql
+
+- name: modify postgresql.conf
+  lineinfile:
+    dest: "{{postgres_dir}}/postgresql.conf"
+    line: "port = 5432"
+  tags: postgresql
+
+- name : Start postgresql service
+  service:
+    name: postgresql
+    state: started
+    enabled: yes
+  tags: postgresql
+
+- name: Copy postgresql sql init
+  template: 
+    src: pg_init.sql.j2 
+    dest: /tmp/pg_init.sql
+  tags: postgresql
+
+- name: Create user and database 
+  shell: psql -f /tmp/pg_init.sql
+  environment: 
+    PGPORT: "{{postgres_port}}"
+  become: true
+  become_user: postgres
+  tags: postgresql
+
+- name: remove defaults from pg_hba file
+  lineinfile:
+    dest: "{{postgres_dir}}/pg_hba.conf"
+    regexp: "^local.*peer$"
+    state: absent
+  tags: postgresql
+
+- name: Add authorizations to pg_hba file
+  lineinfile:
+    dest: "{{postgres_dir}}/pg_hba.conf"
+    line: "local   all             all                                     md5"
+  tags: postgresql
+
+- name : Stop postgresql service
+  service:
+    name: postgresql
+    state: stopped
+  tags: postgresql
+  ignore_errors: true
+
+- name : Start postgresql service
+  service:
+    name: postgresql
+    state: started
+    enabled: yes
+  tags: postgresql
+
+- name: remove postgresql sql init
+  file:
+    path: /tmp/pg_init.sql
+    state: absent
+  tags: postgresql

@@ -1,0 +1,9 @@
+alter user postgres password '{{pg_pwd}}';
+create user bdt createdb createuser password '{{pg_pwd}}';
+
+CREATE DATABASE bdt
+  WITH ENCODING='UTF8'
+       OWNER=bdt
+       CONNECTION LIMIT=-1;
+
+ \q
