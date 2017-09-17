@@ -9,11 +9,13 @@
     state: stopped
   tags: postgresql
   ignore_errors: true
+  become: yes
 
 - name: Install postgresql
   yum:
     name: postgresql-server
     state: present
+  become: yes
   tags: postgresql
 
 - name: Create data directory
@@ -23,17 +25,20 @@
     owner: postgres
     group: postgres
     mode: 0700 
+  become: yes
   tags: postgresql
 
 - name: Copy postgresql service
   template: 
     src: postgresql.service.j2 
     dest: /lib/systemd/system/postgresql.service
+  become: yes
   tags: postgresql
 
 - stat:
     path: "{{postgres_dir}}/PG_VERSION"
   register: pg_data
+  become: yes
   tags: postgresql
 
 - name: Init Postgresql
@@ -41,24 +46,28 @@
   environment: 
     PGDATA: "{{postgres_dir}}"
   when: not pg_data.stat.exists
+  become: yes
   tags: postgresql
 
 - name: Add authorizations to pg_hba file
   lineinfile:
     dest: "{{postgres_dir}}/pg_hba.conf"
     line: "host    all             all             0.0.0.0/0               md5"
+  become: yes
   tags: postgresql
 
 - name: Add authorizations to pg_hba file
   lineinfile:
     dest: "{{postgres_dir}}/pg_hba.conf"
     line: "host    all             all             127.0.0.1/32               md5"
+  become: yes
   tags: postgresql
 
 - name: Add authorizations to pg_hba file
   lineinfile:
     dest: "{{postgres_dir}}/pg_hba.conf"
     line: "host    all             all             all       md5"
+  become: yes
   tags: postgresql
 
 - name: remove defaults from pg_hba file
@@ -66,18 +75,21 @@
     dest: "{{postgres_dir}}/pg_hba.conf"
     regexp: "^host.*ident$"
     state: absent
+  become: yes
   tags: postgresql
 
 - name: modify postgresql.conf
   lineinfile:
     dest: "{{postgres_dir}}/postgresql.conf"
     line: "listen_addresses = '*'"
+  become: yes
   tags: postgresql
 
 - name: modify postgresql.conf
   lineinfile:
     dest: "{{postgres_dir}}/postgresql.conf"
     line: "port = 5432"
+  become: yes
   tags: postgresql
 
 - name : Start postgresql service
@@ -85,12 +97,14 @@
     name: postgresql
     state: started
     enabled: yes
+  become: yes
   tags: postgresql
 
 - name: Copy postgresql sql init
   template: 
     src: pg_init.sql.j2 
     dest: /tmp/pg_init.sql
+  become: yes
   tags: postgresql
 
 - name: Create user and database 
@@ -106,18 +120,21 @@
     dest: "{{postgres_dir}}/pg_hba.conf"
     regexp: "^local.*peer$"
     state: absent
+  become: yes
   tags: postgresql
 
 - name: Add authorizations to pg_hba file
   lineinfile:
     dest: "{{postgres_dir}}/pg_hba.conf"
     line: "local   all             all                                     md5"
+  become: yes
   tags: postgresql
 
 - name : Stop postgresql service
   service:
     name: postgresql
     state: stopped
+  become: yes
   tags: postgresql
   ignore_errors: true
 
@@ -126,10 +143,12 @@
     name: postgresql
     state: started
     enabled: yes
+  become: yes
   tags: postgresql
 
 - name: remove postgresql sql init
   file:
     path: /tmp/pg_init.sql
     state: absent
+  become: yes
   tags: postgresql
