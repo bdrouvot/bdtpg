@@ -1,1 +1,2 @@
 pgbdt ansible_ssh_user=root
+oradb ansible_ssh_user=root

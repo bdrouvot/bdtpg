@@ -13,7 +13,7 @@
 
 - name: Install postgresql
   yum:
-    name: postgresql-server
+    name: postgresql96-server
     state: present
   become: yes
   tags: postgresql
@@ -31,7 +31,7 @@
 - name: Copy postgresql service
   template: 
     src: postgresql.service.j2 
-    dest: /lib/systemd/system/postgresql.service
+    dest: /lib/systemd/system/postgresql-9.6.service
   become: yes
   tags: postgresql
 
@@ -42,10 +42,11 @@
   tags: postgresql
 
 - name: Init Postgresql
-  shell: postgresql-setup initdb
+  shell: /usr/pgsql-9.6/bin/postgresql96-setup initdb
   environment: 
-    PGDATA: "{{postgres_dir}}"
+    PGSETUP_INITDB_OPTIONS: "--pgdata={{postgres_dir}}"
   when: not pg_data.stat.exists
+  ignore_errors: true
   become: yes
   tags: postgresql
 
@@ -94,7 +95,7 @@
 
 - name : Start postgresql service
   service:
-    name: postgresql
+    name: postgresql-9.6
     state: started
     enabled: yes
   become: yes
@@ -132,7 +133,7 @@
 
 - name : Stop postgresql service
   service:
-    name: postgresql
+    name: postgresql-9.6
     state: stopped
   become: yes
   tags: postgresql
@@ -140,7 +141,7 @@
 
 - name : Start postgresql service
   service:
-    name: postgresql
+    name: postgresql-9.6
     state: started
     enabled: yes
   become: yes

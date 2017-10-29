@@ -1,5 +1,6 @@
 alter user postgres password '{{pg_pwd}}';
-create user bdt createdb createuser password '{{pg_pwd}}';
+create user bdt createdb;
+alter user bdt password '{{pg_pwd}}';
 
 CREATE DATABASE bdt
   WITH ENCODING='UTF8'
